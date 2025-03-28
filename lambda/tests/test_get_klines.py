@@ -13,7 +13,7 @@ event = {
 
 # Invoke the Lambda function
 response = client.invoke(
-    FunctionName="arn:aws:lambda:eu-central-1:390402534126:function:BtcForecastAwsStack-BtcForecastFunction784E5E0A-vXSiLYA4HFVX",
+    FunctionName="btc-forecast-handler",
     InvocationType="RequestResponse",  # Optional: For synchronous invocation
     Payload=json.dumps(event)          # Pass the payload here
 )
