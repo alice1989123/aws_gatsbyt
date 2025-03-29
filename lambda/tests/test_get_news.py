@@ -5,13 +5,11 @@ import json
 function_name = "crypto_news"  # Replace with your actual Lambda function name
 region_name = "eu-central-1"   # Replace if using a different AWS region
 
-# Optional: payload to send (if your Lambda accepts event params)
+# ✅ Optional: payload with list of sources
 payload = {
-    # "queryStringParameters": {
-    #     "collection_name": "BTCUSDT"
-    # }
+    "sources": ["crypto.news", "coindesk.com"],
+    "limit": 1  # Optional: get the latest item per source
 }
-
 
 # ---- INVOKE LAMBDA ----
 client = boto3.client("lambda", region_name=region_name)

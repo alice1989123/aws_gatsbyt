@@ -67,7 +67,7 @@ class BtcForecastAwsStack(Stack):
 
             crypto_data_table = dynamodb.Table(
                 self, "CryptoDataTable",
-                table_name="crypto_data",
+                table_name="crypto_news",
                 billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
                 partition_key=dynamodb.Attribute(name="PK", type=dynamodb.AttributeType.STRING),
                 
@@ -86,6 +86,16 @@ class BtcForecastAwsStack(Stack):
             )
             crypto_news_lambda.add_environment("DYNAMO_TABLE_NAME", crypto_data_table.table_name)
             crypto_data_table.grant_read_data(crypto_news_lambda)
+            crypto_news_insert_lambda = _lambda.Function(
+                self, "crypoNewsInsert",
+                function_name="crypoNewsInsert",
+                runtime=_lambda.Runtime.PYTHON_3_12,  # Match runtime with the layer's compatibility
+                handler="insert_news.lambda_handler",  # Entry point for the Lambda function
+                code=_lambda.Code.from_asset("lambda/insert_news"),  # Path to the Lambda function code
+                timeout=Duration.seconds(30), 
+            )
+            crypto_news_insert_lambda.add_environment("DYNAMO_TABLE_NAME", crypto_data_table.table_name)
+            crypto_data_table.grant_write_data(crypto_news_insert_lambda)
 
             predictions_table = dynamodb.Table(
             self, "PredictionsTable",
