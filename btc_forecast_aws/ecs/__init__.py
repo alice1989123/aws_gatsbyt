@@ -1,11 +1,11 @@
 from aws_cdk import (
     aws_dynamodb as dynamodb,
-    RemovalPolicy,
-    core
+    RemovalPolicy
 )
+from constructs import Construct
 
-class DynamoTables(core.Construct):
-    def __init__(self, scope: core.Construct, id: str, **kwargs):
+class DynamoTables(Construct):
+    def __init__(self, scope: Construct, id: str, **kwargs):
         super().__init__(scope, id, **kwargs)
 
         self.crypto_data_table = dynamodb.Table(

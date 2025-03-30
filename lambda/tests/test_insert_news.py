@@ -3,48 +3,37 @@ import json
 from datetime import datetime, timedelta
 
 # ---- CONFIG ----
-function_name = "crypto_news"  # Replace if your function name is different
 region_name = "eu-central-1"
+# Replace this with your actual function name
+lambda_function_name = "crypoNewsInsert"
+client = boto3.client("lambda", region_name=region_name)
 
-# ---- TEST PAYLOAD ----
-now = datetime.utcnow()
 
-news_payload = {
+# Your sample payload
+payload = {
     "news": [
         {
-            "headline": "Bitcoin Hits New High",
-            "summary": "Bitcoin price surged past $85,000 for the first time.",
-            "url": "https://crypto.news/bitcoin-hits-new-high",
-            "timestamp": (now).isoformat(),
-            "source": "crypto.news"
+            "content": "- Headline: Trump pardons BitMEX founders, is ‘Bitcoin Jesus’ Roger Ver next?\n- Summary: President Donald Trump has pardoned the founders of BitMEX...\n- URL: https://crypto.news/trump-bitmex-founders-bitcoin-jesus-roger-ver-next/",
+            "timestamp": "2025-03-29T22:27:40.869822"
         },
         {
-            "headline": "Ethereum Gas Fees Drop",
-            "summary": "Ethereum's gas fees are at their lowest in months.",
-            "url": "https://crypto.news/ethereum-gas-fees-drop",
-            "timestamp": (now + timedelta(seconds=5)).isoformat(),
-            "source": "crypto.news"
-        },
-        {
-            "headline": "Solana Network Upgrade",
-            "summary": "Solana releases a major update improving TPS performance.",
-            "url": "https://crypto.news/solana-network-upgrade",
-            "timestamp": (now + timedelta(seconds=10)).isoformat(),
-            "source": "crypto.news"
+            "content": "- Headline: NFT Sales Recover 4.5% to $102.8M, CryptoPunks Sales Surge 140%\n- Summary: The NFT market has shown resilience...\n- URL: https://crypto.news/nft-sales-recover-8m-cryptopunks-sales-surge-140/",
+            "timestamp": "2025-03-29T22:27:52.424625"
         }
     ]
 }
 
-# ---- INVOKE LAMBDA ----
-client = boto3.client("lambda", region_name=region_name)
+# Initialize the boto3 Lambda client
+client = boto3.client('lambda', region_name='eu-central-1')
 
+# Invoke the function
 response = client.invoke(
-    FunctionName=function_name,
-    InvocationType="RequestResponse",
-    Payload=json.dumps(news_payload)
+    FunctionName=lambda_function_name,
+    InvocationType='RequestResponse',  # You can also use 'Event' for async
+    Payload=json.dumps(payload)
 )
 
-# ---- PARSE RESPONSE ----
-response_payload = response["Payload"].read().decode("utf-8")
-print("🔁 Lambda Response:")
-print(json.dumps(json.loads(response_payload), indent=2))
+# Read and print the result
+response_payload = response['Payload'].read().decode('utf-8')
+print("🔁 Lambda response:")
+print(response_payload)
