@@ -1,12 +1,15 @@
 from aws_cdk import (
     aws_lambda as _lambda,
     aws_iam as iam,
-    Duration
+    Duration,
+    aws_sqs as sqs,
+    aws_lambda_event_sources as lambda_events,
+
 )
 from constructs import Construct
 
 class ForecastLambdas(Construct):
-    def __init__(self, scope: Construct, id: str, tables, **kwargs):
+    def __init__(self, scope: Construct, id: str, queue: sqs.Queue,  tables , **kwargs):
         super().__init__(scope, id, **kwargs)
 
         self.binance_layer = _lambda.LayerVersion.from_layer_version_arn(
@@ -70,6 +73,11 @@ class ForecastLambdas(Construct):
         )
         self.crypto_news_insert_lambda.add_environment("DYNAMO_TABLE_NAME", tables.crypto_data_table.table_name)
         tables.crypto_data_table.grant_write_data(self.crypto_news_insert_lambda)
+        queue.grant_consume_messages(self.crypto_news_insert_lambda)
+        self.crypto_news_insert_lambda.add_event_source(
+            lambda_events.SqsEventSource(queue)
+        )
+       
 
         self.predictions_lambda = _lambda.Function(
             self, "PredictionsAPI",
@@ -81,3 +89,4 @@ class ForecastLambdas(Construct):
             timeout=Duration.seconds(30)
         )
         tables.predictions_table.grant_read_data(self.predictions_lambda)
+        

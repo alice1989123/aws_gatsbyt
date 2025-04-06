@@ -1,15 +1,14 @@
 from aws_cdk import (
     Stack,
     aws_apigateway as apigw,
-    RemovalPolicy,
-    aws_ssm as ssm
+     aws_sqs as sqs
 )
 from constructs import Construct
 from btc_forecast_aws.lambda_constructs.lambda_constructs import ForecastLambdas
 from btc_forecast_aws.dynamo_constructs.dynamo_constructs import DynamoTables
 from btc_forecast_aws.ecs.ecr_constructs import EcrConstruct
 from btc_forecast_aws.ecs.ecs_cluster_construct  import EcsClusterConstruct
-from btc_forecast_aws.ecs.ecs_service_construct import EcsEc2ServiceConstruct
+from btc_forecast_aws.ecs.ecs_service_construct import ScheduledScraperTaskConstruct
 from btc_forecast_aws.network.vpc_construct import VpcConstruct
 import os
 import dotenv
@@ -43,9 +42,22 @@ class BtcForecastAwsStack(Stack):
 
         # Define all DynamoDB tables
         tables = DynamoTables(self, "DynamoTables")
+    # Create the SQS queues
 
+        dlq = sqs.Queue(
+            self, "ScraperDLQ",
+            queue_name="ScraperDLQ"
+        )
+
+        scraper_queue = sqs.Queue(
+            self, "ScraperQueue",
+            queue_name="ScraperQueue",
+            dead_letter_queue=sqs.DeadLetterQueue(
+            max_receive_count=3,  # After 3 failed receives, message goes to DLQ
+            queue=dlq)
+            )
         # Define all Lambda functions and link to tables
-        lambdas = ForecastLambdas(self, "ForecastLambdas", tables=tables)
+        lambdas = ForecastLambdas(self, "ForecastLambdas", tables=tables ,queue=scraper_queue)
 
         # Create the API Gateway
         self.api = apigw.RestApi(
@@ -54,7 +66,7 @@ class BtcForecastAwsStack(Stack):
             deploy_options=apigw.StageOptions(stage_name="default")
         )
 
-        self.ecr_construct = EcrConstruct(self, "EcrConstruct", repo_name="my-app-repo")
+        self.ecr_construct = EcrConstruct(self, "EcrConstruct", repo_name="crypto_repo")
 
        
 
@@ -72,9 +84,10 @@ class BtcForecastAwsStack(Stack):
         cluster = EcsClusterConstruct(self, "EcsCluster", vpc=vpc).cluster
 
 
-
-        EcsEc2ServiceConstruct(
-            self, "ScraperEcsService",
+        
+        ScheduledScraperTaskConstruct(
+            self, "ScheduledScraperTask",
             cluster=cluster,
-            image_uri=image_uri
+            image_uri=image_uri,
+            queue=scraper_queue
         )
