@@ -31,7 +31,7 @@ table = dynamodb.Table(os.environ["DYNAMO_TABLE_NAME"])
 def lambda_handler(event, context):
     try:
         sources = event.get("sources", ["crypto.news"])  # Default to crypto.news if none given
-        limit = event.get("limit", 1)
+        limit = event.get("limit", 10)
 
         results = []
 
