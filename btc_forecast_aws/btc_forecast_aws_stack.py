@@ -10,6 +10,7 @@ from btc_forecast_aws.ecs.ecr_constructs import EcrConstruct
 from btc_forecast_aws.ecs.ecs_cluster_construct  import EcsClusterConstruct
 from btc_forecast_aws.ecs.ecs_service_construct import ScheduledScraperTaskConstruct
 from btc_forecast_aws.network.vpc_construct import VpcConstruct
+from btc_forecast_aws.databa_base_constructs.postgres_constructs import PostgresDatabase
 import os
 import dotenv
 import boto3
@@ -30,6 +31,8 @@ response = ssm.put_parameter(
     Overwrite=True  # Set to False if you don't want to overwrite existing
 )
 
+from btc_forecast_aws.ec2_constructs.bastion import BastionHostWithWireGuard
+from btc_forecast_aws.ec2_constructs.bastion import WG_CLIENT_KEY, WG_SERVER_KEY    
 
 image_uri="390402534126.dkr.ecr.eu-central-1.amazonaws.com/crypto_repo:latest"
 
@@ -65,8 +68,8 @@ class BtcForecastAwsStack(Stack):
             rest_api_name="CryptoAPI",
             deploy_options=apigw.StageOptions(stage_name="default")
         )
-
-        self.ecr_construct = EcrConstruct(self, "EcrConstruct", repo_name="crypto_repo")
+        # Not using ECR construct for now TODO: Maybe a trigger is needed to update autoscaling group
+        #self.ecr_construct = EcrConstruct(self, "EcrConstruct", repo_name="crypto_repo")
 
        
 
@@ -81,6 +84,14 @@ class BtcForecastAwsStack(Stack):
         predictions_resource.add_method("GET", predictions_integration, authorization_type=apigw.AuthorizationType.IAM)
 
         vpc = VpcConstruct(self, "VpcConstruct").vpc
+
+        bastion_sg = BastionHostWithWireGuard(self, "BastionHost", vpc=vpc).sg
+
+        postgres_database = PostgresDatabase(self, "crypto-postgres-db", vpc=vpc , bastion_sg=bastion_sg).db_instance
+
+        # Not using ECR construct for now TODO: Maybe a trigger is needed to update autoscaling group
+        
+        '''
         cluster = EcsClusterConstruct(self, "EcsCluster", vpc=vpc).cluster
 
 
@@ -91,3 +102,4 @@ class BtcForecastAwsStack(Stack):
             image_uri=image_uri,
             queue=scraper_queue
         )
+        '''

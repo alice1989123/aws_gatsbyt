@@ -13,6 +13,12 @@ class VpcConstruct(Construct):
                     name="Public",
                     subnet_type=ec2.SubnetType.PUBLIC,
                     cidr_mask=24
+                ),
+                
+                ec2.SubnetConfiguration(
+                    name="Private",
+                    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                    cidr_mask=24
                 )
             ],
             nat_gateways=0  # no need for NAT if we're going fully public
