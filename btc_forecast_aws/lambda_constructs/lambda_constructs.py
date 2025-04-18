@@ -6,6 +6,10 @@ from aws_cdk import (
     aws_lambda_event_sources as lambda_events,
 
 )
+import os
+import dotenv
+
+dotenv.load_dotenv("btc_forecast_aws/.env")
 from constructs import Construct
 
 class ForecastLambdas(Construct):
@@ -24,6 +28,10 @@ class ForecastLambdas(Construct):
             self, "NumpyLayer",
             "arn:aws:lambda:eu-central-1:390402534126:layer:python-numpy-layer:1"
         )
+        self.psycopg2_layer = _lambda.LayerVersion.from_layer_version_arn(
+            self, "psycopg2-layer",
+            "arn:aws:lambda:eu-central-1:390402534126:layer:psycopg2-layer:1"
+) 
 
         self.forecast_lambda = _lambda.Function(
             self, "BtcForecastFunction",
@@ -89,4 +97,21 @@ class ForecastLambdas(Construct):
             timeout=Duration.seconds(30)
         )
         tables.predictions_table.grant_read_data(self.predictions_lambda)
+
+        self.metrics_lambda = _lambda.Function(
+            self, "MetricsAPI",
+            function_name="metrics_api",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="get_metrics_api.lambda_handler",
+            code=_lambda.Code.from_asset("lambda/get_metrics_api"),
+            environment={
+                "DB_HOST": os.getenv("DB_HOST"),
+                "DB_PORT": os.getenv("DB_PORT"),
+                "DB_NAME": os.getenv("DATABASE"),
+                "DB_USER": os.getenv("DBUSER"),
+                "DB_PASSWORD": os.getenv("DBPASSWORD"),
+            },
+            timeout=Duration.seconds(30),
+            layers=[self.psycopg2_layer]
+        )
         

@@ -83,11 +83,16 @@ class BtcForecastAwsStack(Stack):
         predictions_integration = apigw.LambdaIntegration(lambdas.predictions_lambda)
         predictions_resource.add_method("GET", predictions_integration, authorization_type=apigw.AuthorizationType.IAM)
 
+        on_chain_metrics_resource = self.api.root.add_resource("on_chain_metrics")
+        on_chain_metrics_integration = apigw.LambdaIntegration(lambdas.metrics_lambda)
+        on_chain_metrics_resource.add_method("GET", on_chain_metrics_integration, authorization_type=apigw.AuthorizationType.IAM)
+
+
         vpc = VpcConstruct(self, "VpcConstruct").vpc
 
-        bastion_sg = BastionHostWithWireGuard(self, "BastionHost", vpc=vpc).sg
+        #bastion_sg = BastionHostWithWireGuard(self, "BastionHost", vpc=vpc).sg
 
-        postgres_database = PostgresDatabase(self, "crypto-postgres-db", vpc=vpc , bastion_sg=bastion_sg).db_instance
+        postgres_database = PostgresDatabase(self, "crypto-postgres-db", vpc=vpc , bastion_sg=None).db_instance
 
         # Not using ECR construct for now TODO: Maybe a trigger is needed to update autoscaling group
         
