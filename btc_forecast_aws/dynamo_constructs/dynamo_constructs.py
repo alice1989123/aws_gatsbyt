@@ -32,7 +32,7 @@ class DynamoTables(Construct):
                 self, "PredictionsTableImport", table_name="crypto_predictions_"
             )
         else:
-            self.predictions_table = dynamodb.Table(
+            table= dynamodb.Table(
                 self, "PredictionsTable",
                 table_name="crypto_predictions_",
                 billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -42,3 +42,11 @@ class DynamoTables(Construct):
                 max_read_request_units=10,
                 max_write_request_units=10,
             )
+
+            cfn_table = table.node.default_child
+            cfn_table.time_to_live_specification = dynamodb.CfnTable.TimeToLiveSpecificationProperty(
+                attribute_name="ttl",
+                enabled=True
+            )
+
+            self.predictions_table = table
