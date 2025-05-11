@@ -39,7 +39,7 @@ def query_dynamodb(coin):
 
 def lambda_handler(event, context):
     query_params = event.get('queryStringParameters', {}) or {}
-    coin = query_params.get('collection_name', 'BTCUSDT')
+    coin = query_params.get('coin', 'BTCUSDT')
 
     cached_entry = cache.get(coin)
     now = time.time()

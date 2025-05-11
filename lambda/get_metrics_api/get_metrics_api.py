@@ -73,8 +73,7 @@ def lambda_handler(event, context):
                 SELECT timestamp, value
                 FROM onchain_metrics_1d
                 WHERE metric_id = %s
-                ORDER BY timestamp ASC
-                LIMIT 1000;
+                ORDER BY timestamp ASC;
             """, (metric_id,))
             rows = cur.fetchall()
             cur.close()
